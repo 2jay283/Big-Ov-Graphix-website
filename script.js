@@ -20,20 +20,82 @@ const WHATSAPP_CONFIG = {
 
 /**
  * Opens WhatsApp with a pre-filled message containing product details
- * @param {string} productName - Name of the product/service
- * @param {string} productPrice - Price of the product (can be "Contact for pricing" if no price)
- * @param {string} imageUrl - Full URL of the product image
+ * Reads product data from HTML data attributes (data-product-name, data-product-price, data-product-image)
+ * Can be called as: openWhatsAppOrder() or openWhatsAppOrder(this)
+ * @param {HTMLElement|string} buttonElementOrName - The button element or product name (for backward compatibility)
  */
-function openWhatsAppOrder(productName, productPrice, imageUrl) {
+function openWhatsAppOrder(buttonElementOrName) {
+  // Get the button element - check if first parameter is a button element or a string
+  let button = null
+  
+  // Check if first argument is a button element (has nodeType property)
+  if (buttonElementOrName && typeof buttonElementOrName === 'object' && buttonElementOrName.nodeType === 1) {
+    button = buttonElementOrName
+  } else {
+    // If it's a string or not provided, get from event (backward compatibility with old onclick format)
+    const event = window.event
+    if (event && event.target) {
+      button = event.target.closest('.portfolio-whatsapp-btn') || event.target
+    }
+  }
+  
+  // Get the parent portfolio item
+  const portfolioItem = button?.closest('.portfolio-item')
+  if (!portfolioItem) {
+    console.error('Could not find portfolio item. Make sure the button is inside a portfolio-item.')
+    return
+  }
+  
+  // Read product data from HTML data attributes (HTML is the source of truth)
+  let productName = portfolioItem.getAttribute('data-product-name') || ''
+  let productPrice = portfolioItem.getAttribute('data-product-price') || ''
+  let imageUrl = portfolioItem.getAttribute('data-product-image') || ''
+  
+  // If data-price is empty or says "Contact for pricing", try to get actual price from overlay
+  if (!productPrice || productPrice.trim() === '' || productPrice.toLowerCase().includes('contact')) {
+    const overlay = portfolioItem.querySelector('.portfolio-overlay p')
+    if (overlay) {
+      const overlayText = overlay.textContent.trim()
+      // Check if overlay has a price (contains ₦ or numbers, but not "Price:")
+      if (overlayText && 
+          (overlayText.includes('₦') || overlayText.includes('&#8358;') || (/\d/.test(overlayText))) && 
+          !overlayText.toLowerCase().includes('price:') &&
+          !overlayText.toLowerCase().includes('contact')) {
+        productPrice = overlayText.replace('&#8358;', '₦')
+      }
+    }
+  }
   // Get the current page URL to construct full image URL
   const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '')
   const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}/${imageUrl}`
   
+  // Check if product has a price (not "Contact for pricing" or empty)
+  const hasPrice = productPrice && 
+                   productPrice.trim() !== '' && 
+                   productPrice.toLowerCase() !== 'contact for pricing' &&
+                   !productPrice.toLowerCase().includes('contact')
+  
+  // Format price with ₦ symbol if it exists
+  let priceText = ''
+  if (hasPrice) {
+    // Check if price already has ₦ symbol
+    if (productPrice.includes('₦') || productPrice.includes('&#8358;')) {
+      priceText = productPrice.replace('&#8358;', '₦')
+    } else {
+      priceText = `₦ ${productPrice.trim()}`
+    }
+  }
+  
   // Create the message template
-  const message = `Hello! I'm interested in ordering:\n\n` +
-    `📦 *Product Name:* ${productName}\n` +
-    `💰 *Price:* ${productPrice}\n` +
-    `🖼️ *Image:* ${fullImageUrl}\n\n` +
+  let message = `Hello! I'm interested in ordering:\n\n` +
+    `📦 *Product Name:* ${productName}\n`
+  
+  // Only include price if it exists
+  if (hasPrice) {
+    message += `💰 *Price:* ${priceText}\n`
+  }
+  
+  message += `🖼️ *Image:* ${fullImageUrl}\n\n` +
     `Please provide more details about this product.`
   
   // Encode the message for URL
@@ -330,15 +392,27 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/[_-]/g, " ") // Replace underscores and hyphens with spaces
       .replace(/\b\w/g, l => l.toUpperCase()) // Capitalize first letter of each word
     
-    // Default price - can be customized per item if needed
-    const productPrice = "Contact for pricing"
+    // Default price - no price by default (will not show price in overlay)
+    const productPrice = "" // Empty means no price
+    
+    // Store product data as data attributes (HTML source of truth)
+    item.setAttribute("data-product-name", productName)
+    item.setAttribute("data-product-price", productPrice)
+    item.setAttribute("data-product-image", imagePath)
     
     const overlay = document.createElement("div")
     overlay.className = "portfolio-overlay"
-    overlay.innerHTML = `
-      <h3>${productName}</h3>
-      <p>Professional branding & design</p>
-    `
+    // Only show price if it exists
+    if (productPrice && productPrice.trim() !== '') {
+      overlay.innerHTML = `
+        <h3>${productName}</h3>
+        <p>${productPrice}</p>
+      `
+    } else {
+      overlay.innerHTML = `
+        <h3>${productName}</h3>
+      `
+    }
     
     // Create WhatsApp button
     const whatsappBtn = document.createElement("button")
@@ -351,20 +425,15 @@ document.addEventListener("DOMContentLoaded", () => {
       <span>Order Now</span>
     `
     
-    // Add click event to WhatsApp button
+    // Add click event to WhatsApp button - reads from data attributes
     whatsappBtn.addEventListener("click", (e) => {
       e.stopPropagation() // Prevent triggering overlay click
-      openWhatsAppOrder(productName, productPrice, imagePath)
+      openWhatsAppOrder(whatsappBtn) // Pass button element
     })
     
     item.appendChild(img)
     item.appendChild(overlay)
     item.appendChild(whatsappBtn)
-    
-    // Store product data as data attributes for easy access
-    item.setAttribute("data-product-name", productName)
-    item.setAttribute("data-product-price", productPrice)
-    item.setAttribute("data-product-image", imagePath)
     
     return item
   }
