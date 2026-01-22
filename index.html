@@ -583,7 +583,21 @@
             <!-- Image Gallery Section -->
             <div class="image-gallery-section">
                 <h3 class="gallery-section-title">Our Work Gallery</h3>
-                <div class="portfolio-grid" id="portfolioGrid">
+                <!-- Back to Gallery Button (hidden by default) -->
+                <button class="back-to-gallery-btn" id="backToGalleryBtn" style="display: none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    <span>Back to Gallery</span>
+                </button>
+                <!-- Category Folders View -->
+                <div class="category-folders-container" id="categoryFoldersContainer">
+                    <div class="category-folders-grid" id="categoryFoldersGrid">
+                        <!-- Category folders will be dynamically generated -->
+                    </div>
+                </div>
+                <!-- Products Grid View (hidden by default) -->
+                <div class="portfolio-grid" id="portfolioGrid" style="display: none;">
                     <div class="portfolio-item fade-in" data-product-name="5x7 Frame Award" data-product-price="" data-product-image="./images & logo/5x7-frame-award.jpg">
                         <img src="./images & logo/5x7-frame-award.jpg" data-filename="5x7-frame-award.jpg" loading="lazy">
                         <div class="portfolio-overlay">

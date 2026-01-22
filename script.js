@@ -806,3 +806,296 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 })
+
+// =======================================
+// Folder-Based Gallery System
+// =======================================
+
+document.addEventListener("DOMContentLoaded", () => {
+  const portfolioGrid = document.getElementById("portfolioGrid")
+  const categoryFoldersContainer = document.getElementById("categoryFoldersContainer")
+  const categoryFoldersGrid = document.getElementById("categoryFoldersGrid")
+  const backToGalleryBtn = document.getElementById("backToGalleryBtn")
+  
+  if (!portfolioGrid || !categoryFoldersContainer || !categoryFoldersGrid) {
+    return // Exit if elements don't exist
+  }
+  
+  // Get all portfolio items
+  const allPortfolioItems = Array.from(portfolioGrid.querySelectorAll(".portfolio-item"))
+  
+  // Category mapping function - extracts category from product name
+  function getCategoryFromProductName(productName) {
+    const name = productName.toLowerCase().trim()
+    
+    // Define category patterns
+    if (name.includes("frame award") || name.includes("award")) {
+      return "Awards"
+    }
+    if (name.includes("paper bag")) {
+      return "Paper Bags"
+    }
+    if (name.includes("brand identity")) {
+      return "Brand Identity"
+    }
+    if (name.includes("brand shoot")) {
+      return "Brand Shoot"
+    }
+    if (name.includes("business card") || name.includes("bussiness card")) {
+      return "Business Cards"
+    }
+    if (name.includes("cloth tag")) {
+      return "Cloth Tags"
+    }
+    if (name.includes("customized cap") || name.includes("customize cap")) {
+      return "Customized Caps"
+    }
+    if (name.includes("customized pouch") || name.includes("customized  pouch")) {
+      return "Customized Pouches"
+    }
+    if (name.includes("customized bottle")) {
+      return "Customized Bottles"
+    }
+    if (name.includes("customized notepad")) {
+      return "Customized Notepads"
+    }
+    if (name.includes("customized nylon")) {
+      return "Customized Nylons"
+    }
+    if (name.includes("customized pen")) {
+      return "Customized Pens"
+    }
+    if (name.includes("customized shirt")) {
+      return "Customized Shirts"
+    }
+    if (name.includes("digital alarm clock")) {
+      return "Digital Alarm Clocks"
+    }
+    if (name.includes("exercise book")) {
+      return "Exercise Books"
+    }
+    if (name.includes("flyer")) {
+      return "Flyers"
+    }
+    if (name.includes("key holder")) {
+      return "Key Holders"
+    }
+    if (name.includes("logo")) {
+      return "Logos"
+    }
+    if (name.includes("box")) {
+      return "Boxes"
+    }
+    
+    // Default category for unmatched items
+    return "Other"
+  }
+  
+  // Group products by category
+  const categories = {}
+  allPortfolioItems.forEach((item) => {
+    const productName = item.getAttribute("data-product-name") || ""
+    const category = getCategoryFromProductName(productName)
+    
+    if (!categories[category]) {
+      categories[category] = []
+    }
+    categories[category].push(item)
+  })
+  
+  // Add data-category attribute to each item for filtering
+  allPortfolioItems.forEach((item) => {
+    const productName = item.getAttribute("data-product-name") || ""
+    const category = getCategoryFromProductName(productName)
+    item.setAttribute("data-category", category)
+  })
+  
+  // Get SVG icon for category
+  function getCategoryIcon(categoryName) {
+    const icons = {
+      "Awards": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 15L8 17L9 12.5L6 10L10.5 9.5L12 5L13.5 9.5L18 10L15 12.5L16 17L12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+      </svg>`,
+      "Paper Bags": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 2L3 6V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V6L18 2H6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 6H21" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 10V14M16 10V14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Brand Identity": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+        <path d="M9 9H15M9 12H15M9 15H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="7" cy="7" r="1" fill="currentColor"/>
+      </svg>`,
+      "Brand Shoot": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 1V3M12 21V23M23 12H21M3 12H1M19.07 4.93L17.66 6.34M6.34 17.66L4.93 19.07M19.07 19.07L17.66 17.66M6.34 6.34L4.93 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Business Cards": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+        <path d="M2 10H22" stroke="currentColor" stroke-width="2"/>
+        <circle cx="7" cy="7" r="1" fill="currentColor"/>
+        <path d="M7 14H11M7 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Cloth Tags": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V19C20 19.5304 19.7893 20.0391 19.4142 20.4142C19.0391 20.7893 18.5304 21 18 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3Z" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 7H16M8 11H16M8 15H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Customized Caps": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3C8 3 4 5 4 8C4 10 6 12 8 13V19H16V13C18 12 20 10 20 8C20 5 16 3 12 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 3V1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Customized Pouches": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 7H20L19 21H5L4 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9 7V5C9 4.46957 9.21071 3.96086 9.58579 3.58579C9.96086 3.21071 10.4696 3 11 3H13C13.5304 3 14.0391 3.21071 14.4142 3.58579C14.7893 3.96086 15 4.46957 15 5V7" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 11V15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Customized Bottles": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 2V6M15 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M7 6H17C17.5304 6 18.0391 6.21071 18.4142 6.58579C18.7893 6.96086 19 7.46957 19 8V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V8C5 7.46957 5.21071 6.96086 5.58579 6.58579C5.96086 6.21071 6.46957 6 7 6Z" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 10V18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Customized Notepads": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 4H20C20.5304 4 21.0391 4.21071 21.4142 4.58579C21.7893 4.96086 22 5.46957 22 6V20C22 20.5304 21.7893 21.0391 21.4142 21.4142C21.0391 21.7893 20.5304 22 20 22H4C3.46957 22 2.96086 21.7893 2.58579 21.4142C2.21071 21.0391 2 20.5304 2 20V6C2 5.46957 2.21071 4.96086 2.58579 4.58579C2.96086 4.21071 3.46957 4 4 4Z" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 8H16M8 12H16M8 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Customized Nylons": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 8H20L19 21H5L4 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9 8V5C9 4.46957 9.21071 3.96086 9.58579 3.58579C9.96086 3.21071 10.4696 3 11 3H13C13.5304 3 14.0391 3.21071 14.4142 3.58579C14.7893 3.96086 15 4.46957 15 5V8" stroke="currentColor" stroke-width="2"/>
+      </svg>`,
+      "Customized Pens": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 19L19 12L22 15L15 22L12 19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 13L21 10L19 8L16 11L18 13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9 2L2 9L5 12L12 5L9 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`,
+      "Customized Shirts": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 4H20L19 12C19 12.5304 18.7893 13.0391 18.4142 13.4142C18.0391 13.7893 17.5304 14 17 14H7C6.46957 14 5.96086 13.7893 5.58579 13.4142C5.21071 13.0391 5 12.5304 5 12L4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 4L9 2L12 4L15 2L20 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`,
+      "Digital Alarm Clocks": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Exercise Books": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 4H20C20.5304 4 21.0391 4.21071 21.4142 4.58579C21.7893 4.96086 22 5.46957 22 6V20C22 20.5304 21.7893 21.0391 21.4142 21.4142C21.0391 21.7893 20.5304 22 20 22H4C3.46957 22 2.96086 21.7893 2.58579 21.4142C2.21071 21.0391 2 20.5304 2 20V6C2 5.46957 2.21071 4.96086 2.58579 4.58579C2.96086 4.21071 3.46957 4 4 4Z" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 8H16M8 12H16M8 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Flyers": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 12H16M8 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Key Holders": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 2L19 4M11 12L9 14M3 8L5 6M19 4L12 11M19 4L21 6M12 11L9 14M12 11L14 9M9 14L7 16M14 9L16 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="19" cy="19" r="3" stroke="currentColor" stroke-width="2"/>
+      </svg>`,
+      "Logos": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 12H16M12 8V16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Boxes": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 16V8C21 7.46957 20.7893 6.96086 20.4142 6.58579C20.0391 6.21071 19.5304 6 19 6H5C4.46957 6 3.96086 6.21071 3.58579 6.58579C3.21071 6.96086 3 7.46957 3 8V16C3 16.5304 3.21071 17.0391 3.58579 17.4142C3.96086 17.7893 4.46957 18 5 18H19C19.5304 18 20.0391 17.7893 20.4142 17.4142C20.7893 17.0391 21 16.5304 21 16Z" stroke="currentColor" stroke-width="2"/>
+        <path d="M3 10H21M8 14H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`,
+      "Other": `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`
+    }
+    
+    return icons[categoryName] || icons["Other"]
+  }
+  
+  // Create category folder cards
+  function createCategoryFolders() {
+    categoryFoldersGrid.innerHTML = ""
+    
+    const sortedCategories = Object.keys(categories).sort()
+    
+    sortedCategories.forEach((categoryName) => {
+      const categoryCount = categories[categoryName].length
+      const categoryIcon = getCategoryIcon(categoryName)
+      
+      const folderCard = document.createElement("div")
+      folderCard.className = "category-folder-card"
+      folderCard.setAttribute("data-category", categoryName)
+      
+      folderCard.innerHTML = `
+        <div class="category-folder-icon">
+          ${categoryIcon}
+        </div>
+        <div class="category-folder-info">
+          <h3 class="category-folder-name">${categoryName}</h3>
+          <p class="category-folder-count">${categoryCount} ${categoryCount === 1 ? "item" : "items"}</p>
+        </div>
+      `
+      
+      folderCard.addEventListener("click", () => {
+        showCategoryView(categoryName)
+      })
+      
+      categoryFoldersGrid.appendChild(folderCard)
+    })
+  }
+  
+  // Show category view (products for selected category)
+  function showCategoryView(categoryName) {
+    // Hide category folders
+    categoryFoldersContainer.style.display = "none"
+    
+    // Show back button
+    backToGalleryBtn.style.display = "flex"
+    
+    // Show portfolio grid
+    portfolioGrid.style.display = "grid"
+    
+    // Hide all items first
+    allPortfolioItems.forEach((item) => {
+      item.style.display = "none"
+    })
+    
+    // Show only items from selected category
+    const categoryItems = allPortfolioItems.filter(
+      (item) => item.getAttribute("data-category") === categoryName
+    )
+    
+    categoryItems.forEach((item) => {
+      item.style.display = "flex"
+    })
+    
+    // Scroll to gallery section
+    const gallerySection = document.getElementById("portfolio")
+    if (gallerySection) {
+      gallerySection.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }
+  
+  // Show main gallery view (category folders)
+  function showMainGallery() {
+    // Show category folders
+    categoryFoldersContainer.style.display = "block"
+    
+    // Hide back button
+    backToGalleryBtn.style.display = "none"
+    
+    // Hide portfolio grid
+    portfolioGrid.style.display = "none"
+    
+    // Scroll to gallery section
+    const gallerySection = document.getElementById("portfolio")
+    if (gallerySection) {
+      gallerySection.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }
+  
+  // Back button click handler
+  if (backToGalleryBtn) {
+    backToGalleryBtn.addEventListener("click", () => {
+      showMainGallery()
+    })
+  }
+  
+  // Initialize: Create category folders and hide portfolio grid
+  createCategoryFolders()
+  portfolioGrid.style.display = "none"
+})
