@@ -157,24 +157,120 @@ function openWhatsAppOrder(buttonElementOrName) {
   message += `🖼️ *Image:* ${fullImageUrl}\n\n` +
     `Please provide more details about this product.`
   
-  // Encode the message for URL
-  const encodedMessage = encodeURIComponent(message)
+  // Try WhatsApp Business API first (if backend is available)
+  // Then fall back to Web Share API (mobile), then WhatsApp link
+  sendViaWhatsAppAPI(productName, productPrice, fullImageUrl, message)
+    .catch(() => {
+      // API not available, try Web Share API
+      tryWebShareAPI(productName, fullImageUrl, message)
+    })
   
-  // Construct WhatsApp URL
-  let whatsappUrl
-  if (WHATSAPP_CONFIG.phoneNumber) {
-    // Use phone number format
-    whatsappUrl = `https://wa.me/${WHATSAPP_CONFIG.phoneNumber}?text=${encodedMessage}`
-  } else if (WHATSAPP_CONFIG.qrCode) {
-    // Use QR code format
-    whatsappUrl = `https://wa.me/qr/${WHATSAPP_CONFIG.qrCode}?text=${encodedMessage}`
-  } else {
-    // Fallback to the default QR code from the website
-    whatsappUrl = `https://wa.me/qr/KZWYMGJISBQXL1?text=${encodedMessage}`
+  /**
+   * Try to send via WhatsApp Business API (backend)
+   */
+  async function sendViaWhatsAppAPI(productName, productPrice, imageUrl, messageText) {
+    // API endpoint - automatically detects if running on Vercel or local
+    const apiEndpoint = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000/api/whatsapp-send'
+      : '/api/whatsapp-send'
+    
+    try {
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productName: productName,
+          productPrice: productPrice,
+          imageUrl: imageUrl,
+          recipientPhone: WHATSAPP_CONFIG.phoneNumber || undefined
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          // Show success message
+          alert('Order sent successfully! The designer will receive your order with the product image.')
+          return Promise.resolve()
+        }
+      }
+      throw new Error('API request failed')
+    } catch (error) {
+      // API not available or failed, throw to trigger fallback
+      return Promise.reject(error)
+    }
   }
   
-  // Open WhatsApp in a new tab/window
-  window.open(whatsappUrl, '_blank')
+  /**
+   * Try Web Share API for sharing image (works on mobile devices)
+   */
+  function tryWebShareAPI(productName, imageUrl, messageText) {
+    if (navigator.share && navigator.canShare) {
+      // Fetch the image as a blob to share it
+      fetch(imageUrl)
+        .then(response => {
+          if (!response.ok) throw new Error('Image fetch failed')
+          return response.blob()
+        })
+        .then(blob => {
+          // Create a File object from the blob
+          const imageFile = new File([blob], `${productName.replace(/\s+/g, '-')}.jpg`, { type: 'image/jpeg' })
+          
+          // Check if we can share files
+          const shareData = {
+            title: `Order: ${productName}`,
+            text: messageText,
+            files: [imageFile]
+          }
+          
+          if (navigator.canShare(shareData)) {
+            // Share with image file (mobile devices)
+            navigator.share(shareData)
+              .then(() => console.log('Shared successfully via Web Share API'))
+              .catch(err => {
+                console.log('Share failed, falling back to WhatsApp link:', err)
+                openWhatsAppLink(messageText)
+              })
+          } else {
+            // Can't share files, fall back to WhatsApp link
+            openWhatsAppLink(messageText)
+          }
+        })
+        .catch(err => {
+          console.log('Image fetch failed, using WhatsApp link:', err)
+          openWhatsAppLink(messageText)
+        })
+    } else {
+      // Web Share API not available, use WhatsApp link
+      openWhatsAppLink(messageText)
+    }
+  }
+  
+  /**
+   * Helper function to open WhatsApp with message (fallback)
+   */
+  function openWhatsAppLink(messageText) {
+    // Encode the message for URL
+    const encodedMessage = encodeURIComponent(messageText)
+    
+    // Construct WhatsApp URL
+    let whatsappUrl
+    if (WHATSAPP_CONFIG.phoneNumber) {
+      // Use phone number format
+      whatsappUrl = `https://wa.me/${WHATSAPP_CONFIG.phoneNumber}?text=${encodedMessage}`
+    } else if (WHATSAPP_CONFIG.qrCode) {
+      // Use QR code format
+      whatsappUrl = `https://wa.me/qr/${WHATSAPP_CONFIG.qrCode}?text=${encodedMessage}`
+    } else {
+      // Fallback to the default QR code from the website
+      whatsappUrl = `https://wa.me/qr/KZWYMGJISBQXL1?text=${encodedMessage}`
+    }
+    
+    // Open WhatsApp in a new tab/window
+    window.open(whatsappUrl, '_blank')
+  }
 }
 
 // =======================================
