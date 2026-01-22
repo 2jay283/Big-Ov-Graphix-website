@@ -51,6 +51,14 @@ function openWhatsAppOrder(buttonElementOrName) {
   let productPrice = portfolioItem.getAttribute('data-product-price') || ''
   let imageUrl = portfolioItem.getAttribute('data-product-image') || ''
   
+  // If imageUrl is missing, try to get it from the img element
+  if (!imageUrl) {
+    const imgElement = portfolioItem.querySelector('img')
+    if (imgElement && imgElement.src) {
+      imageUrl = imgElement.src
+    }
+  }
+  
   // If data-price is empty or says "Contact for pricing", try to get actual price from overlay
   if (!productPrice || productPrice.trim() === '' || productPrice.toLowerCase().includes('contact')) {
     const overlay = portfolioItem.querySelector('.portfolio-overlay p')
@@ -65,9 +73,60 @@ function openWhatsAppOrder(buttonElementOrName) {
       }
     }
   }
+  
   // Get the current page URL to construct full image URL
-  const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '')
-  const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}/${imageUrl}`
+  // Handle both relative and absolute paths
+  let fullImageUrl = imageUrl
+  
+  // If it's already a full URL (starts with http), use it as is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    fullImageUrl = imageUrl
+  } else {
+    // If it's a relative path, construct the full URL
+    // Check if img element has a full URL we can use
+    const imgElement = portfolioItem.querySelector('img')
+    if (imgElement && imgElement.src && imgElement.src.startsWith('http')) {
+      fullImageUrl = imgElement.src
+    } else {
+      // Construct URL from relative path
+      const currentPath = window.location.pathname
+      // Remove the filename from the path to get the directory
+      let basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1)
+      // If basePath is empty or just '/', it means we're at root
+      if (basePath === '/' || basePath === '') {
+        basePath = '/'
+      }
+      // Remove leading ./ if present
+      const cleanImagePath = imageUrl.replace(/^\.\//, '')
+      // Construct full URL
+      fullImageUrl = window.location.origin + basePath + cleanImagePath
+    }
+  }
+  
+  // Encode the URL properly (especially for spaces and special characters in path)
+  // We need to encode each path segment separately to handle spaces like "images & logo"
+  try {
+    const urlObj = new URL(fullImageUrl)
+    // Split pathname and encode each segment (to handle spaces like "images & logo")
+    const pathSegments = urlObj.pathname.split('/').filter(seg => seg !== '')
+    const encodedPath = '/' + pathSegments.map(segment => encodeURIComponent(segment)).join('/')
+    urlObj.pathname = encodedPath
+    fullImageUrl = urlObj.toString()
+  } catch (e) {
+    // Fallback: manual encoding if URL constructor fails
+    // Split the URL into parts
+    const match = fullImageUrl.match(/^(https?:\/\/[^\/]+)(\/.*)$/)
+    if (match) {
+      const [, base, path] = match
+      // Encode each path segment
+      const encodedPath = path.split('/').map(segment => {
+        // Skip empty segments
+        if (!segment) return ''
+        return encodeURIComponent(segment)
+      }).join('/')
+      fullImageUrl = base + encodedPath
+    }
+  }
   
   // Check if product has a price (not "Contact for pricing" or empty)
   const hasPrice = productPrice && 
