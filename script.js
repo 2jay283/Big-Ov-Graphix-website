@@ -1046,6 +1046,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Show back button
     backToGalleryBtn.style.display = "flex"
     
+    // Hide featured videos section
+    const videoGallerySection = document.querySelector(".video-gallery-section")
+    if (videoGallerySection) {
+      videoGallerySection.style.display = "none"
+    }
+    
     // Show portfolio grid
     portfolioGrid.style.display = "grid"
     
@@ -1077,6 +1083,12 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Hide back button
     backToGalleryBtn.style.display = "none"
+    
+    // Show featured videos section again
+    const videoGallerySection = document.querySelector(".video-gallery-section")
+    if (videoGallerySection) {
+      videoGallerySection.style.display = "block"
+    }
     
     // Hide portfolio grid
     portfolioGrid.style.display = "none"
